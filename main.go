@@ -40,6 +40,27 @@ func encrypt(originalUrl string) string {
 	return hex.EncodeToString(cipherText)
 }
 
+func decrypt(encryptedUrl string) string {
+	block, err := aes.NewCipher(secretKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cipherText, err := hex.DecodeString(encryptedUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	iv := cipherText[:aes.BlockSize]
+	cipherText = cipherText[aes.BlockSize:]
+
+	stream := cipher.NewCTR(block, iv)
+	stream.XORKeyStream(cipherText, cipherText)
+
+	return string(cipherText)
+
+}
+
 func generateShortId() string {
 	b := make([]rune, 6)
 	for i := range b {
@@ -52,6 +73,23 @@ func generateShortId() string {
 	}
 
 	return string(b)
+
+}
+
+func redirectHandler(w http.ResponseWriter, r *http.Request) {
+	shortId := r.URL.Path[1:]
+
+	mu.Lock()
+	encryptedUrl, ok := urlStore[shortId]
+	mu.Unlock()
+
+	if !ok {
+		http.Error(w, "Está URL não existe no projeto", http.StatusNotFound)
+		return
+	}
+
+	decryptedUrl := decrypt(encryptedUrl)
+	http.Redirect(w, r, decryptedUrl, http.StatusNotFound)
 
 }
 
@@ -75,6 +113,7 @@ func shortenUrl(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/shorten", shortenUrl)
+	http.HandleFunc("/", redirectHandler)
 
 	fmt.Println("Projeto iniciando e rodando na porta 8081")
 	log.Fatal(http.ListenAndServe(":8081", nil))
