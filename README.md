@@ -1,45 +1,85 @@
-# 🤖 Encurtador de URL em Go (Golang)
+# 🤖 Curtador de URL em Go (Golang)
 
-- Este é um projeto simples de encurtador de URL desenvolvido em Go. Ele permite que os usuários encurtem URLs longas e sejam redirecionados para a URL original usando um shortID exclusivo. O projeto utiliza criptografia AES para armazenar as URLs de forma segura.
+[![Go](https://github.com/golang/go/blob/master/assets/badge.svg)](https://golang.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## ✨ Funcionalidades
+Este é um projeto simples e eficiente de **encurtador de URL** desenvolvido em Go. Ele permite que usuários acessem URLs longas complexas sendo redirecionados a partir de um `shortID` exclusivo e curto. O projeto foca em **segurança** e **concorrência**, utilizando criptografia AES para o armazenamento e `sync.Mutex` para acesso seguro aos dados.
 
-- Encurtamento de URL: Gera um shortID curto e aleatório para qualquer URL longa.
+## ✨ Funcionalidades Principais
 
-- Redirecionamento: Redireciona o usuário do shortID para a URL original.
+| Recurso | Descrição | Detalhes Técnicos |
+| :--- | :--- | :--- |
+| **Encurtamento de URL** | Gera um `shortID` curto e aleatório para mapear qualquer URL original. | Combinação alfanumérica de letras e números `[a-z][A-Z][0-9]`. |
+| **Redirecionamento Rápido** | Redireciona o usuário do `shortID` para a URL original. | Utiliza o `http.Redirect` do pacote `net/http` em Go. |
+| **Criptografia Segura** | As URLs originais são criptografadas antes do armazenamento. | Algoritmo **AES (Advanced Encryption Standard)** é usado para garantir que o conteúdo sensível não seja armazenado em texto simples. |
+| **Concorrência Segura** | Gerencia o acesso simultâneo ao armazenamento de URLs. | Utiliza `sync.Mutex` para bloquear e liberar o acesso ao mapa de URLs (`urlStore`), prevenindo *race conditions*. |
 
-- Criptografia Segura: Utiliza o algoritmo AES para criptografar as URLs originais antes de armazená-las, garantindo que o conteúdo sensível não seja armazenado em texto simples.
-
-- Geração Aleatória de ID: O shortID é gerado usando uma combinação alfanumérica aleatória ([a-z][A-Z][0-9]).
-
-- Concorrência Segura: Usa sync.Mutex para gerenciar o acesso concorrente ao armazenamento de URLs (urlStore).
+---
 
 ## 🚀 Como Executar o Projeto
 
-Pré-requisitos:
-Certifique-se de ter o Go (versão 1.16 ou superior) instalado em sua máquina.
+Siga os passos abaixo para configurar e rodar o servidor localmente.
 
-Passos de Execução
+### Pré-requisitos
 
-Clone o repositório: https://github.com/danrodsg/url-shortener.git
+Certifique-se de ter o **Go** (versão **1.16 ou superior**) instalado em sua máquina.
 
-Bash:
+### Passos de Execução
 
-- git clone https://github.com/danrodsg/url-shortener.git
-- cd url-shortener
+1.  **Clone o repositório:**
+    ```bash
+    git clone [https://github.com/danrodsg/url-shortener.git](https://github.com/danrodsg/url-shortener.git)
+    cd url-shortener
+    ```
 
-Execute o servidor:
+2.  **Execute o servidor:**
+    ```bash
+    go run main.go
+    ```
 
-go run main.go
+O servidor estará rodando em **`http://localhost:8081`**.
 
-O servidor estará rodando em http://localhost:8081
+---
 
-## 🛠️Exemplo de Uso
-- Encurtamento (Não implementado na API, apenas na lógica): Uma requisição para encurtar a URL "https://www.google.com" gera um ID, por exemplo, aBc123.
+## 🛠️ Exemplo de Uso
 
-- Redirecionamento: Acessar o link no navegador: http://localhost:8080/r/aBc123
+O projeto foi projetado com dois fluxos principais: o encurtamento (lógica interna) e o redirecionamento (endpoint público).
 
-- Resultado Esperado: O navegador será redirecionado para https://www.google.com.
+### 1. Encurtamento (Lógica Interna)
+
+Embora a **API pública de encurtamento não esteja implementada** neste exemplo (ela ocorre apenas na lógica interna/função), o processo interno é o seguinte:
+
+* **URL Original:** `https://www.google.com`
+* **Processo:** O sistema criptografa a URL, gera um `shortID` aleatório (ex: `aBc123`), armazena o par (ID -> URL Criptografada) e desbloqueia o acesso.
+
+### 2. Redirecionamento (Endpoint Público)
+
+Para testar o recurso de redirecionamento, simule o acesso a um `shortID` gerado.
+
+* **Endpoint de Redirecionamento:**
+    ```
+    http://localhost:8081/r/{shortID}
+    ```
+
+* **Exemplo de Acesso:** Se o ID gerado for `aBc123`:
+    ```
+    http://localhost:8081/r/aBc123
+    ```
+
+#### Resultado Esperado
+
+Ao acessar o link no navegador, o servidor decifra a URL original (`https://www.google.com`) e o navegador será redirecionado automaticamente para o destino.
+
+---
+
+## 👨‍💻 Estrutura e Tecnologia
+
+O projeto utiliza os seguintes componentes-chave do ecossistema Go:
+
+* **`net/http`:** Para lidar com as rotas do servidor web e o redirecionamento HTTP.
+* **`crypto/aes`:** Para a implementação da criptografia de 128/192/256 bits.
+* **`sync`:** O `sync.Mutex` é vital para gerenciar o estado compartilhado (`urlStore`) e garantir a **segurança de concorrência** (thread-safety) em um ambiente multi-rotinas (goroutines) típico de aplicações Go.
+* **`math/rand`:** Usado na geração pseudo-aleatória do `shortID`.
 
 
 
